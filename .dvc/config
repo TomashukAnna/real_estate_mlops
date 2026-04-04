@@ -1,0 +1,4 @@
+[core]
+    remote = local
+['remote "local"']
+    url = C:/Users/An_to/AppData/Local/Temp/dvc_store

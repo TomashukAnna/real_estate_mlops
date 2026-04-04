@@ -1,10 +1,106 @@
-venv/
+cat > .gitignore << 'EOF'
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-.DS_Store
-.ipynb_checkpoints/
-data/raw/*.csv
+*.py[cod]
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
 *.log
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# DotEnv configuration
 .env
+
+# Database
+*.db
+*.rdb
+
+# IDE
+.idea
+.vscode/
+.spyproject/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# Mypy
+.mypy_cache/
+
+# MLflow
 mlruns/
+
+# DVC
 .dvc/
+.dvc_tmp/
+
+# Data files (exclude raw CSVs but allow DVC files)
+/data/raw/*.csv
+/data/processed/*.csv
+/data/external/*.csv
+!/data/raw/*.dvc
+!/data/processed/*.dvc
+
+# Models
+*.pkl
+*.joblib
+*.h5
+*.pb
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+
+# Testing
+.pytest_cache/
+EOF
