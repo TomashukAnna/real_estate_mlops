@@ -1,0 +1,5 @@
+outs:
+- md5: 948b8162bf6cb06a490caecd85477aa1
+  size: 469675632
+  hash: md5
+  path: russia_real_estate.csv
