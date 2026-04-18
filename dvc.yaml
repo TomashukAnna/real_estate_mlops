@@ -1,0 +1,38 @@
+stages:
+  prepare:
+    cmd: python src/data/make_dataset.py
+    deps:
+      - src/data/make_dataset.py
+      - data/raw/russia_real_estate.csv
+    outs:
+      - data/processed/cleaned_data.csv
+
+  train_baseline:
+    cmd: >
+      python src/models/train_dvc_model.py
+      --data-path data/processed/cleaned_data.csv
+      --model-path models/model/model.pkl
+      --metadata-path models/model/metadata.json
+      --metrics-path reports/train_metrics.json
+      --tracking-uri ${mlflow.tracking_uri}
+      --experiment-name ${mlflow.experiment_name}
+      --run-name ${mlflow.run_name}
+      --n-estimators ${model.random_forest.n_estimators}
+      --max-depth ${model.random_forest.max_depth}
+      --random-state ${model.random_forest.random_state}
+    deps:
+      - src/models/train_dvc_model.py
+      - data/processed/cleaned_data.csv
+    params:
+      - mlflow.tracking_uri
+      - mlflow.experiment_name
+      - mlflow.run_name
+      - model.random_forest.n_estimators
+      - model.random_forest.max_depth
+      - model.random_forest.random_state
+    outs:
+      - models/model/model.pkl
+      - models/model/metadata.json
+    metrics:
+      - reports/train_metrics.json:
+          cache: false
