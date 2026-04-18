@@ -1,4 +1,3 @@
-cat > .gitignore << 'EOF'
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -8,6 +7,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 build/
 develop-eggs/
 dist/
@@ -36,29 +36,21 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+.pytest_cache/
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-
-# Sphinx documentation
+# Documentation
 docs/_build/
 
-# PyBuilder
-target/
-
-# DotEnv configuration
+# Local environment files
 .env
+.env.local
 
 # Database
 *.db
 *.rdb
 
 # IDE
-.idea
+.idea/
 .vscode/
 .spyproject/
 
@@ -70,37 +62,29 @@ target/
 *.swp
 *.swo
 
-# Mypy
+# Type-checking caches
 .mypy_cache/
 
-# MLflow
+# MLflow local artifacts
 mlruns/
+mlartifacts/
 
-# DVC
-.dvc/
+# DVC local temp
 .dvc_tmp/
 
-# Data files (exclude raw CSVs but allow DVC files)
+# Data files are tracked by DVC, not Git
 /data/raw/*.csv
 /data/processed/*.csv
 /data/external/*.csv
 !/data/raw/*.dvc
 !/data/processed/*.dvc
 
-# Models
+# Model binaries are produced by pipeline
 *.pkl
 *.joblib
 *.h5
 *.pb
 
-# Logs
+# Generic logs
 *.log
 logs/
-
-# Environment variables
-.env
-.env.local
-
-# Testing
-.pytest_cache/
-EOF
