@@ -1,4 +1,4 @@
 [core]
     remote = local
 ['remote "local"']
-    url = C:/Users/An_to/AppData/Local/Temp/dvc_store
+    url = ../real_estate_mlops_dvc_remote

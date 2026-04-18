@@ -1,0 +1,54 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python src/data/make_dataset.py
+    deps:
+    - path: data/raw/russia_real_estate.csv
+      hash: md5
+      md5: 948b8162bf6cb06a490caecd85477aa1
+      size: 469675632
+    - path: src/data/make_dataset.py
+      hash: md5
+      md5: ba7e7b8b1422a24710bb16ed33d14bd7
+      size: 1759
+    outs:
+    - path: data/processed/cleaned_data.csv
+      hash: md5
+      md5: eeeefdd6746a2dc16db946fe6cbb670e
+      size: 45733434
+  train_baseline:
+    cmd: "python src/models/train_dvc_model.py --data-path data/processed/cleaned_data.csv
+      --model-path models/model/model.pkl --metadata-path models/model/metadata.json
+      --metrics-path reports/train_metrics.json --tracking-uri http://localhost:5000
+      --experiment-name real_estate_dvc_pipeline --run-name random_forest_dvc --n-estimators
+      150 --max-depth 12 --random-state 42\n"
+    deps:
+    - path: data/processed/cleaned_data.csv
+      hash: md5
+      md5: eeeefdd6746a2dc16db946fe6cbb670e
+      size: 45733434
+    - path: src/models/train_dvc_model.py
+      hash: md5
+      md5: 5de06daccc716913c526e17c4d1285d7
+      size: 4914
+    params:
+      params.yaml:
+        mlflow.experiment_name: real_estate_dvc_pipeline
+        mlflow.run_name: random_forest_dvc
+        mlflow.tracking_uri: http://localhost:5000
+        model.random_forest.max_depth: 12
+        model.random_forest.n_estimators: 150
+        model.random_forest.random_state: 42
+    outs:
+    - path: models/model/metadata.json
+      hash: md5
+      md5: a8e3e2fea2714c8fcc84c725d671af84
+      size: 779
+    - path: models/model/model.pkl
+      hash: md5
+      md5: 580eff503ef41b760eccc2c4ca5124db
+      size: 35125713
+    - path: reports/train_metrics.json
+      hash: md5
+      md5: 6954da9b84c10ec9acbee4aa8115652e
+      size: 124
