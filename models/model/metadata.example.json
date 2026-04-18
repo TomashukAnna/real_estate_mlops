@@ -1,0 +1,17 @@
+{
+  "model_version": "run-id-or-semver",
+  "model_name": "random_forest",
+  "features": [
+    "region",
+    "building_type",
+    "level",
+    "levels",
+    "year",
+    "month",
+    "rooms",
+    "area",
+    "kitchen_area",
+    "object_type",
+    "weekday_number"
+  ]
+}

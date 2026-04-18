@@ -1,0 +1,10 @@
+mlflow:
+  tracking_uri: http://localhost:5000
+  experiment_name: real_estate_dvc_pipeline
+  run_name: random_forest_dvc
+
+model:
+  random_forest:
+    n_estimators: 150
+    max_depth: 12
+    random_state: 42
