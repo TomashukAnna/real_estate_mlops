@@ -1,0 +1,34 @@
+{
+  "model_version": "717444ce0af84443bdd76aa512c0e2e2",
+  "model_name": "random_forest",
+  "run_id": "717444ce0af84443bdd76aa512c0e2e2",
+  "tracking_uri": "http://localhost:5000",
+  "experiment_name": "real_estate_dvc_pipeline",
+  "features": [
+    "region",
+    "building_type",
+    "level",
+    "levels",
+    "year",
+    "month",
+    "rooms",
+    "area",
+    "kitchen_area",
+    "object_type",
+    "weekday_number"
+  ],
+  "target": "price_per_m2",
+  "train_rule": "year <= 2024",
+  "test_rule": "year == 2025",
+  "metrics": {
+    "mae": 34357.04015367987,
+    "mape": 0.3636586706315674,
+    "rmse": 200566.92747466304,
+    "r2": 0.07673825574480797
+  },
+  "params": {
+    "n_estimators": 150,
+    "max_depth": 12,
+    "random_state": 42
+  }
+}
