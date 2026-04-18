@@ -36,25 +36,3 @@ stages:
     metrics:
       - reports/train_metrics.json:
           cache: false
-
-  register_model:
-    cmd: >
-      python src/models/register_mlflow_model.py
-      --tracking-uri ${mlflow.tracking_uri}
-      --metadata-path models/model/metadata.json
-      --registered-model-name ${mlflow.registry.model_name}
-      --artifact-path model
-      --alias ${mlflow.registry.alias}
-      --stage ${mlflow.registry.stage}
-      --output-path reports/registry_result.json
-    deps:
-      - src/models/register_mlflow_model.py
-      - models/model/metadata.json
-    params:
-      - mlflow.tracking_uri
-      - mlflow.registry.model_name
-      - mlflow.registry.alias
-      - mlflow.registry.stage
-    metrics:
-      - reports/registry_result.json:
-          cache: false

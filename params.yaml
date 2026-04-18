@@ -2,10 +2,6 @@ mlflow:
   tracking_uri: http://localhost:5000
   experiment_name: real_estate_dvc_pipeline
   run_name: random_forest_dvc
-  registry:
-    model_name: real_estate_price_model
-    alias: champion
-    stage: Staging
 
 model:
   random_forest:

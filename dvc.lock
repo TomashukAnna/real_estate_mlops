@@ -52,27 +52,3 @@ stages:
       hash: md5
       md5: 6954da9b84c10ec9acbee4aa8115652e
       size: 124
-  register_model:
-    cmd: "python src/models/register_mlflow_model.py --tracking-uri http://localhost:5000
-      --metadata-path models/model/metadata.json --registered-model-name real_estate_price_model
-      --artifact-path model --alias champion --stage Staging --output-path reports/registry_result.json\n"
-    deps:
-    - path: models/model/metadata.json
-      hash: md5
-      md5: a8e3e2fea2714c8fcc84c725d671af84
-      size: 779
-    - path: src/models/register_mlflow_model.py
-      hash: md5
-      md5: 27379ad75f9ed3067685dc630f695154
-      size: 3563
-    params:
-      params.yaml:
-        mlflow.registry.alias: champion
-        mlflow.registry.model_name: real_estate_price_model
-        mlflow.registry.stage: Staging
-        mlflow.tracking_uri: http://localhost:5000
-    outs:
-    - path: reports/registry_result.json
-      hash: md5
-      md5: b26998ac30cf3d25cfbdd9f6b8d075ef
-      size: 236
