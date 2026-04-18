@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   api:
+    image: ${API_IMAGE:-real-estate-api:local}
     build:
       context: .
       dockerfile: Dockerfile
