@@ -1,0 +1,9 @@
+{
+  "registered_model_name": "real_estate_price_model",
+  "run_id": "717444ce0af84443bdd76aa512c0e2e2",
+  "version": "1",
+  "stage": "Staging",
+  "alias": "champion",
+  "tracking_uri": "http://localhost:5000",
+  "status": "ok"
+}
