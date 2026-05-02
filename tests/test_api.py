@@ -61,3 +61,32 @@ def test_predict(client: TestClient):
     payload = response.json()
     assert payload["model_version"] == "test-model-v1"
     assert payload["prediction"] == 123456.78
+
+
+def test_metrics_endpoint(client: TestClient):
+    client.get("/health")
+    client.post(
+        "/predict",
+        json={
+            "region": 2661,
+            "building_type": 1,
+            "level": 5,
+            "levels": 10,
+            "year": 2025,
+            "month": 4,
+            "rooms": 2,
+            "area": 52.4,
+            "kitchen_area": 9.8,
+            "object_type": 1,
+            "weekday_number": 2,
+        },
+    )
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "text/plain" in response.headers["content-type"]
+    body = response.text
+    assert "real_estate_api_requests_total" in body
+    assert "real_estate_api_request_latency_seconds" in body
+    assert "real_estate_api_predictions_total" in body
+    assert "real_estate_api_model_ready" in body
