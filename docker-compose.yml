@@ -8,7 +8,6 @@ services:
     env_file:
       - .env
     environment:
-      # Яндекс Диск
       - YANDEX_DISK_TOKEN=${YANDEX_DISK_TOKEN}
       - YANDEX_DISK_BASE_PATH=${YANDEX_DISK_BASE_PATH:-/MLOps/real_estate}
       - YANDEX_MODEL_PATH=${YANDEX_MODEL_PATH:-models/model.pkl}
@@ -16,6 +15,8 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    networks:
+      - mlops-network
 
   bff:
     build:
@@ -25,12 +26,11 @@ services:
     env_file:
       - .env
     environment:
-      BFF_INFERENCE_API_URL: http://api:8000
-      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-http://host.docker.internal:5000}
-      BFF_DATASET_PATH: data/processed/cleaned_data.csv
-      BFF_PARAMS_PATH: params.yaml
-      BFF_REGISTRY_RESULT_PATH: reports/registry_result.json
-      # Яндекс Диск
+      - BFF_INFERENCE_API_URL=http://api:8000
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-http://host.docker.internal:5000}
+      - BFF_DATASET_PATH=data/processed/cleaned_data.csv
+      - BFF_PARAMS_PATH=params.yaml
+      - BFF_REGISTRY_RESULT_PATH=reports/registry_result.json
       - YANDEX_DISK_TOKEN=${YANDEX_DISK_TOKEN}
       - YANDEX_DISK_BASE_PATH=${YANDEX_DISK_BASE_PATH:-/MLOps/real_estate}
       - YANDEX_DATASET_PATH=${YANDEX_DATASET_PATH:-data/processed/cleaned_data.csv}
@@ -43,6 +43,8 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    networks:
+      - mlops-network
 
   ui:
     build:
@@ -50,12 +52,14 @@ services:
       dockerfile: Dockerfile
     container_name: real-estate-ui
     environment:
-      STREAMLIT_BFF_URL: http://bff:8002
+      - STREAMLIT_BFF_URL=http://bff:8002
     ports:
       - "8080:8501"
     depends_on:
       - bff
     restart: unless-stopped
+    networks:
+      - mlops-network
 
   drift:
     image: ${API_IMAGE:-real-estate-api:local}
@@ -66,7 +70,6 @@ services:
     env_file:
       - .env
     environment:
-      # Яндекс Диск
       - YANDEX_DISK_TOKEN=${YANDEX_DISK_TOKEN}
       - YANDEX_DISK_BASE_PATH=${YANDEX_DISK_BASE_PATH:-/MLOps/real_estate}
     command:
@@ -78,6 +81,8 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    networks:
+      - mlops-network
 
   prometheus:
     image: prom/prometheus:v2.54.1
@@ -91,6 +96,8 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    networks:
+      - mlops-network
 
   grafana:
     image: grafana/grafana:11.1.4
@@ -101,12 +108,14 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
       - prometheus
       - loki
     restart: unless-stopped
+    networks:
+      - mlops-network
 
   loki:
     image: grafana/loki:3.1.1
@@ -119,6 +128,8 @@ services:
       - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
       - loki-data:/loki
     restart: unless-stopped
+    networks:
+      - mlops-network
 
   promtail:
     image: grafana/promtail:3.1.1
@@ -131,6 +142,12 @@ services:
     depends_on:
       - loki
     restart: unless-stopped
+    networks:
+      - mlops-network
+
+networks:
+  mlops-network:
+    driver: bridge
 
 volumes:
   loki-data:
