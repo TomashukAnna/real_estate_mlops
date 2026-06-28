@@ -63,26 +63,23 @@ spec:
     spec:
       containers:
         - name: bff
-          image: real-estate-bff:local
+          image: real-estate-bff:k8sfix
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 8002
+          env:
+            - name: BFF_DATASET_PATH
+              value: /app/data/processed/cleaned_data.csv
           envFrom:
             - configMapRef:
                 name: real-estate-config
           volumeMounts:
-            - name: data
-              mountPath: /app/data
-              readOnly: true
             - name: models
               mountPath: /app/models
             - name: reports
               mountPath: /app/reports
       volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: real-estate-data
         - name: models
           persistentVolumeClaim:
             claimName: real-estate-models

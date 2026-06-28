@@ -32,19 +32,19 @@ def _request_json(
 
 def _format_currency(value: Any) -> str:
     if value is None or value == "":
-        return "n/a"
+        return "н/д"
     return f"{float(value):,.0f} RUB".replace(",", " ")
 
 
 def _format_percent(value: Any) -> str:
     if value is None or value == "":
-        return "n/a"
+        return "н/д"
     return f"{float(value) * 100:.1f}%"
 
 
 def _format_date(value: Any) -> str:
     if not value:
-        return "n/a"
+        return "н/д"
     return pd.to_datetime(value).strftime("%d.%m.%Y %H:%M:%S")
 
 
@@ -80,11 +80,11 @@ def _popup_html(point: Dict[str, Any]) -> str:
         if point.get("relative_error") is not None
         else ""
     )
-    flags = ", ".join(point.get("flags", [])) or "none"
+    flags = ", ".join(point.get("flags", [])) or "нет"
     return (
-        f"<div><h4>Apartment #{point.get('listing_id', 'n/a')}</h4>"
+        f"<div><h4>Квартира #{point.get('listing_id', 'н/д')}</h4>"
         f"{rows}{prediction}{actual}{relative_error}"
-        f"<div><strong>flags</strong>: {flags}</div></div>"
+        f"<div><strong>флаги</strong>: {flags}</div></div>"
     )
 
 
@@ -188,15 +188,15 @@ def _predictions_frame(predictions: List[Dict[str, Any]]) -> pd.DataFrame:
         apartment = item.get("apartment", {})
         rows.append(
             {
-                "time": _format_date(item.get("timestamp")),
-                "prediction": _format_currency(item.get("prediction")),
-                "actual": _format_currency(item.get("actual_price_per_m2")),
-                "relative_error": _format_percent(item.get("relative_error")),
-                "flags": ", ".join(item.get("flags", [])) or "none",
-                "apartment": (
-                    f"rooms {apartment.get('rooms', 'n/a')}, "
-                    f"area {apartment.get('area', 'n/a')}, "
-                    f"region {apartment.get('region', 'n/a')}"
+                "Время": _format_date(item.get("timestamp")),
+                "Прогноз": _format_currency(item.get("prediction")),
+                "Факт": _format_currency(item.get("actual_price_per_m2")),
+                "Относительная ошибка": _format_percent(item.get("relative_error")),
+                "Флаги": ", ".join(item.get("flags", [])) or "нет",
+                "Квартира": (
+                    f"комнат {apartment.get('rooms', 'н/д')}, "
+                    f"площадь {apartment.get('area', 'н/д')}, "
+                    f"регион {apartment.get('region', 'н/д')}"
                 ),
             }
         )
@@ -208,15 +208,15 @@ def _experiments_frame(runs: List[Dict[str, Any]]) -> pd.DataFrame:
     for run in runs:
         rows.append(
             {
-                "name": run.get("name"),
-                "status": run.get("status"),
-                "started": _format_date(run.get("start_time")),
-                "duration_s": run.get("duration_seconds"),
-                "metrics": "\n".join(
+                "Название": run.get("name"),
+                "Статус": run.get("status"),
+                "Начало": _format_date(run.get("start_time")),
+                "Длительность, с": run.get("duration_seconds"),
+                "Метрики": "\n".join(
                     f"{key}: {value:.4f}"
                     for key, value in run.get("metrics", {}).items()
                 ),
-                "params": "\n".join(
+                "Параметры": "\n".join(
                     f"{key}: {value}" for key, value in run.get("params", {}).items()
                 ),
             }
@@ -231,10 +231,10 @@ def _render_inference_tab() -> None:
     retrain_status = st.session_state["retrain_status"] or {}
 
     controls = st.columns([1, 1, 1, 1])
-    if controls[0].button("Refresh Dashboard", use_container_width=True):
+    if controls[0].button("Обновить дашборд", use_container_width=True):
         _load_dashboard(force_new_sample=False)
         st.rerun()
-    if controls[1].button("Resample Map", use_container_width=True):
+    if controls[1].button("Обновить выборку на карте", use_container_width=True):
         _load_dashboard(force_new_sample=True)
         st.rerun()
     if controls[2].button("Добавить новую квартиру", use_container_width=True):
@@ -252,123 +252,123 @@ def _render_inference_tab() -> None:
         _load_experiments()
         st.rerun()
 
-    st.subheader("Inference Map")
+    st.subheader("Карта предсказаний")
     st.caption(
-        "Markers use live /predict scores: green if prediction ≥ actual, red if "
-        "below; recent logged predictions replace the same listing on the map."
+        "Маркеры используют результаты /predict: зелёный — если прогноз >= факта, "
+        "красный — если ниже; последние сохранённые предсказания обновляют точку на карте."
     )
     st_folium(_build_map(points), width=None, height=620, returned_objects=[])
 
     metric_cols = st.columns(4)
-    metric_cols[0].metric("Displayed points", len(points))
-    metric_cols[1].metric("Predicted points", len(predictions))
+    metric_cols[0].metric("Точек на карте", len(points))
+    metric_cols[1].metric("Предсказаний", len(predictions))
     metric_cols[2].metric(
-        "Drift window",
+        "Окно дрейфа",
         drift.get("observation_count", 0),
     )
     metric_cols[3].metric(
-        "Labeled observations",
+        "Размеченных наблюдений",
         drift.get("labeled_observation_count", 0),
     )
 
-    st.subheader("Drift Summary")
+    st.subheader("Сводка по дрейфу")
     drift_cols = st.columns(4)
     drift_cols[0].metric(
-        "Data drift",
+        "Дрейф данных",
         f"{drift.get('data_drift', {}).get('score', 0.0):.3f}",
     )
     drift_cols[1].metric(
-        "Prediction drift",
+        "Дрейф предсказаний",
         f"{drift.get('prediction_drift', {}).get('score', 0.0):.3f}",
     )
     drift_cols[2].metric(
-        "Target drift",
+        "Дрейф таргета",
         f"{drift.get('target_drift', {}).get('score', 0.0):.3f}",
     )
     drift_cols[3].metric(
-        "Concept drift",
+        "Концепт-дрейф",
         f"{drift.get('concept_drift', {}).get('score', 0.0):.3f}",
     )
     st.caption(
-        "Observed features: "
+        "Выявленные признаки: "
         + ", ".join(drift.get("drifted_features", []))
         if drift.get("drifted_features")
-        else "Observed features: none"
+        else "Выявленные признаки: нет"
     )
 
-    st.subheader("Last Predictions")
+    st.subheader("Последние предсказания")
     st.dataframe(_predictions_frame(predictions), use_container_width=True)
 
-    st.subheader("Retraining")
+    st.subheader("Переобучение")
     status_cols = st.columns(4)
-    status_cols[0].metric("Status", retrain_status.get("status", "unknown"))
-    status_cols[1].metric("Started", _format_date(retrain_status.get("started_at")))
+    status_cols[0].metric("Статус", retrain_status.get("status", "неизвестно"))
+    status_cols[1].metric("Запущено", _format_date(retrain_status.get("started_at")))
     status_cols[2].metric(
-        "Finished",
+        "Завершено",
         _format_date(retrain_status.get("finished_at")),
     )
     status_cols[3].metric(
-        "Model version",
-        retrain_status.get("model_version", "n/a"),
+        "Версия модели",
+        retrain_status.get("model_version", "н/д"),
     )
     if retrain_status.get("error"):
         st.error(retrain_status["error"])
-    st.code(retrain_status.get("logs", "") or "No logs yet.", language="text")
+    st.code(retrain_status.get("logs", "") or "Логи пока отсутствуют.", language="text")
 
 
 def _render_experiments_tab() -> None:
     experiments = st.session_state["experiments"] or {}
 
-    if st.button("Load / Refresh Experiments", use_container_width=False):
+    if st.button("Загрузить / обновить эксперименты", use_container_width=False):
         _load_experiments()
         st.rerun()
 
     if st.session_state["experiments"] is None:
-        st.info("Experiments are loaded on demand to keep the inference UI fast.")
+        st.info("Эксперименты загружаются по запросу, чтобы интерфейс работал быстрее.")
         return
 
-    st.subheader("Registry")
+    st.subheader("Реестр моделей")
     registry = experiments.get("registry", {})
     registry_cols = st.columns(4)
-    registry_cols[0].metric("Model", registry.get("model_name", "n/a"))
-    registry_cols[1].metric("Alias", registry.get("alias", "n/a"))
-    registry_cols[2].metric("Alias version", registry.get("alias_version", "n/a"))
-    registry_cols[3].metric("Stage", registry.get("stage", "n/a"))
+    registry_cols[0].metric("Модель", registry.get("model_name", "н/д"))
+    registry_cols[1].metric("Алиас", registry.get("alias", "н/д"))
+    registry_cols[2].metric("Версия алиаса", registry.get("alias_version", "н/д"))
+    registry_cols[3].metric("Стадия", registry.get("stage", "н/д"))
 
     st.caption(
-        f"Tracking URI: {experiments.get('tracking_uri', 'n/a')} | "
-        f"Experiment: {experiments.get('experiment_name', 'n/a')}"
+        f"Tracking URI: {experiments.get('tracking_uri', 'н/д')} | "
+        f"Эксперимент: {experiments.get('experiment_name', 'н/д')}"
     )
 
     if experiments.get("error"):
         st.warning(experiments["error"])
 
-    st.subheader("Runs")
+    st.subheader("Запуски")
     runs = experiments.get("runs", [])
     if runs:
         st.dataframe(_experiments_frame(runs), use_container_width=True)
     else:
-        st.info("No MLflow runs are available.")
+        st.info("Запуски MLflow отсутствуют.")
 
 
 def main() -> None:
     st.set_page_config(
-        page_title="Real Estate MLOps UI",
+        page_title="Real Estate MLOps",
         page_icon="🏠",
         layout="wide",
     )
-    st.title("Real Estate MLOps UI")
+    st.title("Real Estate MLOps")
     st.caption(
-        "Streamlit interface on top of the existing BFF and inference stack."
+        "Интерфейс Streamlit поверх существующих BFF и сервиса инференса."
     )
 
     try:
         _ensure_state()
     except requests.RequestException as exc:
-        st.error(f"Failed to reach BFF at {BFF_BASE_URL}: {exc}")
+        st.error(f"Не удалось подключиться к BFF по адресу {BFF_BASE_URL}: {exc}")
         st.stop()
 
-    inference_tab, experiments_tab = st.tabs(["Inference", "Experiments"])
+    inference_tab, experiments_tab = st.tabs(["Инференс", "Эксперименты"])
     with inference_tab:
         _render_inference_tab()
     with experiments_tab:

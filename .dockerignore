@@ -9,6 +9,8 @@ __pycache__
 *.pyo
 *.pyd
 data
+!data/processed/
+!data/processed/cleaned_data.csv
 mlartifacts
 notebooks
 docs
