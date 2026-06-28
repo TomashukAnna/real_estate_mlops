@@ -18,12 +18,12 @@ load_dotenv()
 
 class YandexStorage:
     def __init__(self, token: Optional[str] = None):
-        # Проверяем, запущены ли тесты в CI
+        self.token = token or os.getenv("YANDEX_DISK_TOKEN")
         is_ci = os.getenv("CI") == "true"
 
-        self.token = token or os.getenv("YANDEX_DISK_TOKEN")
+        # Всегда устанавливаем base_path, даже в CI
+        self.base_path = os.getenv("YANDEX_DISK_BASE_PATH", "/MLOps/real_estate")
 
-        # В CI пропускаем инициализацию Яндекс Диска
         if is_ci and not self.token:
             print("CI environment: Yandex Disk is disabled")
             self.client = None
@@ -35,17 +35,14 @@ class YandexStorage:
                 "Set it in .env file or environment variables."
             )
 
-        self.base_path = os.getenv(
-            "YANDEX_DISK_BASE_PATH",
-            "/MLOps/real_estate")
         self.client = yadisk.YaDisk(token=self.token)
 
         try:
             self.client.check_token()
             print(f"Yandex Disk connected. Base path: {self.base_path}")
         except Exception as e:
-            print(f"❌ Failed to connect to Yandex Disk: {e}")
-
+            print(f"Failed to connect to Yandex Disk: {e}")
+        
     def _full_path(self, remote_path: str) -> str:
         """Полный путь к файлу на Яндекс Диске"""
         return f"{self.base_path}/{remote_path.lstrip('/')}"
