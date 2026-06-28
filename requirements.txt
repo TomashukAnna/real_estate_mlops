@@ -17,3 +17,4 @@ prometheus-client
 
 #yandex disk connection
 yadisk>=1.11.0
+python-dotenv>=1.0.0
