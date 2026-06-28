@@ -29,22 +29,24 @@ class BffSettings:
     )
     inference_log_path: Path = field(
         default_factory=lambda: Path(
-            os.getenv("INFERENCE_LOG_PATH", "reports/inference/predictions.jsonl")
-        )
-    )
+            os.getenv(
+                "INFERENCE_LOG_PATH",
+                "reports/inference/predictions.jsonl")))
     drift_report_path: Path = field(
         default_factory=lambda: Path(
-            os.getenv("DRIFT_REPORT_PATH", "reports/drift/latest_drift_report.json")
-        )
-    )
+            os.getenv(
+                "DRIFT_REPORT_PATH",
+                "reports/drift/latest_drift_report.json")))
     params_path: Path = field(
-        default_factory=lambda: Path(os.getenv("BFF_PARAMS_PATH", "params.yaml"))
-    )
+        default_factory=lambda: Path(
+            os.getenv(
+                "BFF_PARAMS_PATH",
+                "params.yaml")))
     registry_result_path: Path = field(
         default_factory=lambda: Path(
-            os.getenv("BFF_REGISTRY_RESULT_PATH", "reports/registry_result.json")
-        )
-    )
+            os.getenv(
+                "BFF_REGISTRY_RESULT_PATH",
+                "reports/registry_result.json")))
     model_metadata_path: Path = field(
         default_factory=lambda: Path(
             os.getenv("MODEL_METADATA_PATH", "models/model/metadata.json")
@@ -71,8 +73,10 @@ class BffSettings:
         )
     )
     data_drift_warning: float = field(
-        default_factory=lambda: float(os.getenv("BFF_DATA_DRIFT_WARNING", "0.2"))
-    )
+        default_factory=lambda: float(
+            os.getenv(
+                "BFF_DATA_DRIFT_WARNING",
+                "0.2")))
     concept_drift_warning: float = field(
         default_factory=lambda: float(
             os.getenv("BFF_CONCEPT_DRIFT_WARNING", "0.25")

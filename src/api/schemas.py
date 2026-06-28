@@ -24,7 +24,7 @@ class PredictionRequest(BaseModel):
     )
     log_event: bool = Field(
         True,
-        description="When false, the prediction is not appended to the inference log.",
+        description="Error, the prediction's not appended.",
     )
 
     @field_validator("actual_price_per_m2")

@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib import error, request
 
@@ -38,14 +37,14 @@ class DatasetService:
     def __init__(self, settings: BffSettings) -> None:
         self.settings = settings
         self._feature_columns = feature_columns(settings.model_metadata_path)
-        
+
         # Инициализируем хранилище Яндекс Диска
         try:
             self._storage = YandexStorage()
         except ValueError as e:
             print(f"❌ Yandex Disk initialization failed: {e}")
             self._storage = None
-        
+
         # Загружаем датасет с Яндекс Диска
         self._dataset = self._load_dataset()
         self._actual_lookup = self._build_actual_lookup()
@@ -59,84 +58,97 @@ class DatasetService:
         return int(len(self._dataset)) if self._dataset is not None else 0
 
     def _load_dataset_from_yandex(self) -> Optional[pd.DataFrame]:
-        """Загружает датасет с Яндекс Диска"""
+        """Загружает датасет с Яндекс Диска."""
         if self._storage is None:
             print("❌ Yandex Storage not available")
             return None
-        
-        # Путь к датасету на Яндекс Диске (из переменных окружения или по умолчанию)
-        remote_dataset_path = self.settings.yandex_dataset_path if hasattr(self.settings, 'yandex_dataset_path') else "data/processed/cleaned_data.csv"
-        
-        print(f"📥 Loading dataset from Yandex Disk: {remote_dataset_path}")
+
+        # Путь к датасету на Яндекс Диске
+        remote_dataset_path = (
+            self.settings.yandex_dataset_path
+            if hasattr(self.settings, "yandex_dataset_path")
+            else "data/processed/cleaned_data.csv"
+        )
+
+        print(f"Loading dataset from Yandex Disk:"
+              f"{remote_dataset_path}")
         df = self._storage.download_dataframe(remote_dataset_path)
-        
+
         if df is None:
             # Если обработанного датасета нет — пробуем загрузить сырой
             raw_remote_path = "data/raw/russia_real_estate.csv"
-            print(f"⚠️ Processed dataset not found, trying raw: {raw_remote_path}")
+            print(
+                f"Processed dataset not found, trying raw: {raw_remote_path}"
+            )
             raw_df = self._storage.download_dataframe(raw_remote_path)
             if raw_df is not None:
                 print("🔄 Processing raw dataset...")
                 df = self._process_raw_data(raw_df)
-                # Сохраняем обработанный датасет обратно на Яндекс Диск
                 self._storage.upload_dataframe(df, remote_dataset_path)
             else:
-                print(f"❌ Raw dataset not found on Yandex Disk: {raw_remote_path}")
+                print(
+                    f"Raw dataset not found on Yandex Disk: {raw_remote_path}"
+                )
                 return None
-        
+
         return df
 
     def _load_dataset(self) -> pd.DataFrame:
-        """Загружает датасет (с Яндекс Диска или локально как fallback)"""
+        """Загружает датасет (с Яндекс Диска или локально как fallback)."""
         # Пытаемся загрузить с Яндекс Диска
         if self._storage is not None:
             df = self._load_dataset_from_yandex()
             if df is not None:
-                use_columns = list(dict.fromkeys(self._feature_columns + MAP_COLUMNS))
-                # Проверяем наличие нужных колонок
-                available_columns = [col for col in use_columns if col in df.columns]
+                use_columns = list(
+                    dict.fromkeys(self._feature_columns + MAP_COLUMNS)
+                )
+                available_columns = [
+                    col for col in use_columns
+                    if col in df.columns
+                ]
                 if available_columns:
                     df = df[available_columns].copy()
                     df = df.dropna(subset=available_columns).copy()
                     df["listing_id"] = range(len(df))
-                    print(f"✅ Dataset loaded from Yandex Disk: {len(df)} rows")
+                    print(
+                        f"Dataset loaded from Yandex Disk: {len(df)} rows"
+                    )
                     return df
-        
+
         # Fallback: загружаем локально (если есть)
         dataset_path = self.settings.dataset_path
         if dataset_path.exists():
-            print(f"⚠️ Fallback: loading dataset from local path: {dataset_path}")
-            use_columns = list(dict.fromkeys(self._feature_columns + MAP_COLUMNS))
+            print(f"Fallback: loading dataset from local path: {dataset_path}")
+            use_columns = list(
+                dict.fromkeys(self._feature_columns + MAP_COLUMNS)
+            )
             frame = pd.read_csv(dataset_path, usecols=use_columns)
-            frame = frame.dropna(subset=self._feature_columns + MAP_COLUMNS).copy()
+            frame = frame.dropna(
+                subset=self._feature_columns + MAP_COLUMNS
+            ).copy()
             frame["listing_id"] = range(len(frame))
             return frame
-        
+
         raise FileNotFoundError(
             f"Dataset not found on Yandex Disk or locally at '{dataset_path}'."
         )
 
     def _process_raw_data(self, raw_df: pd.DataFrame) -> pd.DataFrame:
-        """Обработка сырых данных (аналог make_dataset.py)"""
-        # Здесь можно повторить логику из src/data/make_dataset.py
-        # Для примера — базовая очистка
+        """Обработка сырых данных (аналог make_dataset.py)."""
         df = raw_df.copy()
-        
-        # Фильтрация по типу недвижимости (если есть колонка category)
-        if 'category' in df.columns:
-            df = df[df['category'] == 'flat sale'].copy()
-        
-        # Преобразование даты
-        if 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'])
-            df['year'] = df['date'].dt.year
-            df['month'] = df['date'].dt.month
-            df['weekday_number'] = df['date'].dt.weekday
-        
-        # Добавляем price_per_m2
-        if 'price' in df.columns and 'area' in df.columns:
-            df['price_per_m2'] = df['price'] / df['area']
-        
+
+        if "category" in df.columns:
+            df = df[df["category"] == "flat sale"].copy()
+
+        if "date" in df.columns:
+            df["date"] = pd.to_datetime(df["date"])
+            df["year"] = df["date"].dt.year
+            df["month"] = df["date"].dt.month
+            df["weekday_number"] = df["date"].dt.weekday
+
+        if "price" in df.columns and "area" in df.columns:
+            df["price_per_m2"] = df["price"] / df["area"]
+
         return df
 
     def _feature_signature(self, payload: Dict[str, Any]) -> tuple[Any, ...]:
@@ -146,7 +158,9 @@ class DatasetService:
         if self._dataset is None:
             return {}
         grouped = (
-            self._dataset.groupby(self._feature_columns, dropna=False)["price_per_m2"]
+            self._dataset.groupby(
+                self._feature_columns, dropna=False
+            )["price_per_m2"]
             .median()
             .reset_index()
         )
@@ -171,13 +185,17 @@ class DatasetService:
             }
         return lookup
 
-    def _resolve_actual_price(self, apartment: Dict[str, Any]) -> Optional[float]:
+    def _resolve_actual_price(
+        self, apartment: Dict[str, Any]
+    ) -> Optional[float]:
         actual = _safe_float(apartment.get("actual_price_per_m2"))
         if actual is not None:
             return actual
         return self._actual_lookup.get(self._feature_signature(apartment))
 
-    def _resolve_row(self, apartment: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _resolve_row(
+        self, apartment: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         return self._row_lookup.get(self._feature_signature(apartment))
 
     def _build_apartment_payload(self, row: pd.Series) -> Dict[str, Any]:
@@ -212,7 +230,11 @@ class DatasetService:
         try:
             result = self._call_predict(apartment, log_event=False)
             return int(row["listing_id"]), float(result["prediction"])
-        except (error.HTTPError, error.URLError, OSError, ValueError, KeyError):
+        except (error.HTTPError,
+                error.URLError,
+                OSError,
+                ValueError,
+                KeyError):
             return int(row["listing_id"]), None
 
     def _compute_flags(
@@ -262,7 +284,10 @@ class DatasetService:
         }
 
     def sample_points(self, size: Optional[int] = None) -> Dict[str, Any]:
-        sample_size = min(size or self.settings.map_sample_size, len(self._dataset))
+        sample_size = min(
+            size or self.settings.map_sample_size,
+            len(self._dataset)
+        )
         sample = self._dataset.sample(n=sample_size).sort_values("listing_id")
         rows = [row for _, row in sample.iterrows()]
         predictions: Dict[int, Optional[float]] = {
@@ -271,7 +296,8 @@ class DatasetService:
         workers = min(8, max(1, len(rows)))
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futures = [
-                pool.submit(self._predict_listing_for_sample, row) for row in rows
+                pool.submit(self._predict_listing_for_sample, row)
+                for row in rows
             ]
             for future in as_completed(futures):
                 listing_id, prediction = future.result()
@@ -293,7 +319,9 @@ class DatasetService:
 
     def add_random_point(self, excluded_ids: Iterable[int]) -> Dict[str, Any]:
         excluded = {int(value) for value in excluded_ids}
-        available = self._dataset.loc[~self._dataset["listing_id"].isin(excluded)]
+        available = self._dataset.loc[
+            ~self._dataset["listing_id"].isin(excluded)
+        ]
         if available.empty:
             raise ValueError("No more unseen apartments are available.")
         row = available.sample(n=1).iloc[0]
@@ -337,7 +365,9 @@ class DatasetService:
             }
             if "area" in apartment and apartment["area"] is not None:
                 apartment["area"] = float(apartment["area"])
-            if "kitchen_area" in apartment and apartment["kitchen_area"] is not None:
+            if "kitchen_area" in apartment and (
+                apartment["kitchen_area"] is not None
+            ):
                 apartment["kitchen_area"] = float(apartment["kitchen_area"])
             actual = self._resolve_actual_price(
                 {
@@ -352,7 +382,9 @@ class DatasetService:
             events.append(
                 {
                     "timestamp": payload["timestamp"],
-                    "model_version": str(payload.get("model_version", "unknown")),
+                    "model_version": str(
+                        payload.get("model_version", "unknown")
+                    ),
                     "listing_id": int(row_info["listing_id"]),
                     "lat": float(row_info["lat"]),
                     "lon": float(row_info["lon"]),

@@ -87,13 +87,21 @@ def drift_summary() -> Dict[str, Any]:
             "model_version": None,
             "observation_count": 0,
             "labeled_observation_count": 0,
-            "data_drift": {"available": False, "score": 0.0, "status": "unknown"},
+            "data_drift": {
+                "available": False,
+                "score": 0.0,
+                "status": "unknown"
+            },
             "prediction_drift": {
                 "available": False,
                 "score": 0.0,
                 "status": "unknown",
             },
-            "target_drift": {"available": False, "score": 0.0, "status": "unknown"},
+            "target_drift": {
+                "available": False,
+                "score": 0.0,
+                "status": "unknown"
+            },
             "concept_drift": {
                 "available": False,
                 "score": 0.0,
@@ -107,18 +115,24 @@ def drift_summary() -> Dict[str, Any]:
     prediction_score = float(report["prediction_drift"].get("score", 0.0))
     target_available = bool(report["target_drift"].get("available", False))
     target_score = (
-        float(report["target_drift"].get("score", 0.0)) if target_available else 0.0
+        float(report["target_drift"].get("score", 0.0))
+        if target_available
+        else 0.0
     )
     concept_available = bool(report["concept_drift"].get("available", False))
     concept_score = (
-        float(report["concept_drift"].get("score", 0.0)) if concept_available else 0.0
+        float(report["concept_drift"].get("score", 0.0))
+        if concept_available
+        else 0.0
     )
     return {
         "available": True,
         "generated_at": report.get("generated_at"),
         "model_version": report.get("model_version"),
         "observation_count": int(report["window"]["observation_count"]),
-        "labeled_observation_count": int(report["window"]["labeled_observation_count"]),
+        "labeled_observation_count": int(
+            report["window"]["labeled_observation_count"]
+        ),
         "data_drift": {
             "available": True,
             "score": data_score,
@@ -127,12 +141,16 @@ def drift_summary() -> Dict[str, Any]:
         "prediction_drift": {
             "available": report["prediction_drift"].get("available", True),
             "score": prediction_score,
-            "status": _metric_status(prediction_score, settings.data_drift_warning),
+            "status": _metric_status(
+                prediction_score, settings.data_drift_warning
+            ),
         },
         "target_drift": {
             "available": target_available,
             "score": target_score,
-            "status": _metric_status(target_score, settings.data_drift_warning),
+            "status": _metric_status(
+                target_score, settings.data_drift_warning
+            ),
         },
         "concept_drift": {
             "available": concept_available,

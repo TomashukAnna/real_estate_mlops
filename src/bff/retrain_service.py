@@ -5,12 +5,12 @@ import os
 import subprocess
 import sys
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock, Thread
 from typing import Dict, Optional
-from urllib import error, request
+from urllib import request
 
 import yaml
 
@@ -73,7 +73,9 @@ class RetrainManager:
             raise FileNotFoundError(
                 f"params.yaml was not found at '{self.settings.params_path}'."
             )
-        return yaml.safe_load(self.settings.params_path.read_text(encoding="utf-8"))
+        return yaml.safe_load(
+            self.settings.params_path.read_text(
+                encoding="utf-8"))
 
     def _run_command(self, command: list[str]) -> str:
         env = os.environ.copy()
@@ -166,4 +168,5 @@ class RetrainManager:
                 self._state.status = "failed"
                 self._state.finished_at = _utc_now()
                 self._state.error = detail[:8000]
-                self._state.logs = f"{accumulated_logs}\n\n{detail}".strip()[:8000]
+                self._state.logs = f"{accumulated_logs}\n\n{detail}".strip()[
+                    :8000]

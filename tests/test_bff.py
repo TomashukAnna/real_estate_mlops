@@ -4,7 +4,54 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
+
+
+class MockYandexStorage:
+    """Мок для Яндекс Диска в тестах"""
+
+    def __init__(self):
+        self.client = type(
+            "obj",
+            (object,),
+            {
+                "exists": lambda self, path: False,
+                "remove": lambda self, path: None,
+            },
+        )()
+        self.base_path = "/test"
+
+    def download_file(self, remote_path, local_path):
+        return False
+
+    def upload_file(self, local_path, remote_path):
+        return True
+
+    def file_exists(self, remote_path):
+        return False
+
+    def download_dataframe(self, remote_path):
+        return None
+
+    def download_model(self, remote_path):
+        return None
+
+    def download_json(self, remote_path):
+        return None
+
+
+# В тестах подменяем реальный класс на мок
+@pytest.fixture(autouse=True)
+def mock_yandex_storage(monkeypatch):
+    """Подменяем YandexStorage на мок во всех тестах"""
+    import src.infrastructure.yandex_storage
+
+    monkeypatch.setattr(
+        src.infrastructure.yandex_storage,
+        "YandexStorage",
+        MockYandexStorage,
+    )
 
 
 def _prepare_files(tmp_path: Path) -> None:
@@ -12,7 +59,9 @@ def _prepare_files(tmp_path: Path) -> None:
     dataset_path.write_text(
         "\n".join(
             [
-                "region,building_type,level,levels,year,month,rooms,area,kitchen_area,object_type,weekday_number,geo_lat,geo_lon,price_per_m2",
+                "region,building_type,level,levels,year,month,rooms,area,"
+                "kitchen_area,object_type,weekday_number,geo_lat,geo_lon,"
+                "price_per_m2",
                 "2661,1,5,10,2025,4,2,52.4,9.8,1,2,59.939,30.315,145000.0",
                 "3446,2,7,16,2025,4,3,74.0,13.5,11,5,60.050,30.350,157500.0",
             ]

@@ -1,16 +1,9 @@
 from __future__ import annotations
-
-import json
 import os
-import tempfile
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, Optional
-
-import joblib
 import pandas as pd
 from dotenv import load_dotenv
-
 from src.infrastructure.yandex_storage import YandexStorage
 
 DEFAULT_MODEL_PATH = "models/model.pkl"           # путь на Яндекс Диске
@@ -34,7 +27,7 @@ class ModelStore:
         self._loaded: Optional[LoadedModel] = None
         self._error: Optional[str] = None
         self._storage: Optional[YandexStorage] = None
-        
+
         # Инициализируем хранилище Яндекс Диска
         try:
             self._storage = YandexStorage()
@@ -61,7 +54,8 @@ class ModelStore:
 
         # Читаем пути к файлам на Яндекс Диске из переменных окружения
         model_remote_path = os.getenv("YANDEX_MODEL_PATH", DEFAULT_MODEL_PATH)
-        metadata_remote_path = os.getenv("YANDEX_METADATA_PATH", DEFAULT_METADATA_PATH)
+        metadata_remote_path = os.getenv(
+            "YANDEX_METADATA_PATH", DEFAULT_METADATA_PATH)
 
         print(f"Loading model from Yandex Disk: {model_remote_path}")
         print(f"Loading metadata from Yandex Disk: {metadata_remote_path}")
@@ -70,14 +64,19 @@ class ModelStore:
             # 1. Загружаем модель с Яндекс Диска
             model = self._storage.download_model(model_remote_path)
             if model is None:
-                self._error = f"Model not found on Yandex Disk: {model_remote_path}"
+                self._error = (
+                                f"Model not found on Yandex Disk: "
+                                f"{model_remote_path}"
+                            )
                 print(f"{self._error}")
                 return
 
             # 2. Загружаем метаданные с Яндекс Диска
             metadata = self._storage.download_json(metadata_remote_path)
             if metadata is None:
-                print(f"Metadata not found on Yandex Disk: {metadata_remote_path}")
+                print(
+                    f"Loading metadata from Yandex Disk: "
+                    f"{metadata_remote_path}")
                 metadata = {"model_version": "unknown"}
 
         except Exception as exc:
