@@ -5,6 +5,7 @@
 Обязательно нужно:
 - `model.pkl` - файл модели.
 - `metadata.json` - метаданные модели `model_version`.
+- `metadata.json.reference_profile` - baseline-профиль для расчета drift.
 
 Переменные окружения
 - `MODEL_PATH`

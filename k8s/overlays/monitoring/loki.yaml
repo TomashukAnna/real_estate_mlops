@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: real-estate-loki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: real-estate-loki
+  template:
+    metadata:
+      labels:
+        app: real-estate-loki
+    spec:
+      containers:
+        - name: loki
+          image: grafana/loki:3.1.1
+          args: ["-config.file=/etc/loki/loki-config.yml"]
+          ports:
+            - name: http
+              containerPort: 3100
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki/loki-config.yml
+              subPath: loki-config.yml
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: loki-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: real-estate-loki
+spec:
+  selector:
+    app: real-estate-loki
+  ports:
+    - name: http
+      port: 3100
+      targetPort: http

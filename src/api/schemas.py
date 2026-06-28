@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class PredictionRequest(BaseModel):
@@ -15,6 +15,24 @@ class PredictionRequest(BaseModel):
     kitchen_area: float = Field(..., ge=0)
     object_type: int = Field(..., description="Object type id")
     weekday_number: int = Field(..., ge=0, le=6)
+    actual_price_per_m2: float = Field(
+        -1,
+        description=(
+            "Observed target value. Use -1 when the factual price "
+            "is unknown."
+        ),
+    )
+    log_event: bool = Field(
+        True,
+        description="Error, the prediction's not appended.",
+    )
+
+    @field_validator("actual_price_per_m2")
+    @classmethod
+    def validate_actual_price_per_m2(cls, value: float) -> float:
+        if value == -1 or value > 0:
+            return value
+        raise ValueError("actual_price_per_m2 must be -1 or a positive value")
 
 
 class PredictionResponse(BaseModel):

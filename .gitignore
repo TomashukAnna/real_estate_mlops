@@ -71,9 +71,10 @@ mlartifacts/
 
 # DVC local temp
 .dvc_tmp/
+real_estate_mlops_dvc_remote/
 
 # Data files are tracked by DVC, not Git
-/data/raw/*.csv
+/data/raw/*
 /data/processed/*.csv
 /data/external/*.csv
 !/data/raw/*.dvc
@@ -88,3 +89,79 @@ mlartifacts/
 # Generic logs
 *.log
 logs/
+
+# Runtime inference and drift artifacts
+/reports/inference/
+/reports/drift/
+
+# Яндекс Диск (локальный кэш и файлы синхронизации)
+.yandex_disk_cache/
+.yandex_disk/
+*.ydisk
+.ydisk/
+**/.ydisk/
+**/.yandex_disk_cache/
+
+# Данные, модели, отчеты (все, что хранится на Яндекс Диске)
+/data/
+/data/**/*.csv
+/data/**/*.parquet
+/data/**/*.feather
+!/data/**/.gitkeep
+
+# Модели
+/models/
+/models/**/*.pkl
+/models/**/*.joblib
+/models/**/*.h5
+/models/**/*.pb
+!/models/**/.gitkeep
+
+# Отчеты
+/reports/
+/reports/**/*.json
+/reports/**/*.html
+/reports/**/*.csv
+!/reports/**/.gitkeep
+
+# DVC (данные версионируются отдельно)
+.dvc/
+.dvc_tmp/
+.dvc/cache/
+.dvc/remote/
+*.dvc
+.dvc.lock
+
+# Временные файлы приложения
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Docker
+docker-volumes/
+docker-compose.override.yml
+*.dockerignore
+
+# Terraform / Kubernetes (если есть локальные секреты)
+*.tfstate
+*.tfstate.*
+.terraform/
+k8s/*.secret.yaml
+k8s/secrets/
+
+# Артефакты тестов
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Прочие
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
