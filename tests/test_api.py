@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from unittest.mock import patch
 
 import joblib
 import pytest
@@ -57,7 +56,7 @@ def client(tmp_path: Path):
     import src.infrastructure.yandex_storage
 
     original_storage = src.infrastructure.yandex_storage.YandexStorage
-    src.infrastructure.yandex_storage.YandexStorage = MockYandestorage
+    src.infrastructure.yandex_storage.YandexStorage = MockYandexStorage
 
     # Перезагружаем модуль model_loader, чтобы он использовал мок
     import importlib
