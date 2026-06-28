@@ -357,7 +357,7 @@ def main() -> None:
         page_icon="🏠",
         layout="wide",
     )
-    st.title("Real Estate MLOps")
+    st.title("MLOps-платформа для сравнительной оценки недвижимости в реальном времени")
     st.caption(
         "Интерфейс Streamlit поверх существующих BFF и сервиса инференса."
     )
