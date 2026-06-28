@@ -166,7 +166,7 @@ def test_reload_model(client: TestClient):
     response = client.post("/reload-model")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["status"] == "reloaded"
+    assert payload["status"] == "ok"
     assert payload["model_version"] == "test-model-v1"
 
 
