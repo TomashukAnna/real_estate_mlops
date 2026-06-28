@@ -1,0 +1,190 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: real-estate-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: real-estate-api
+  template:
+    metadata:
+      labels:
+        app: real-estate-api
+    spec:
+      containers:
+        - name: api
+          image: real-estate-api:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: real-estate-config
+          volumeMounts:
+            - name: models
+              mountPath: /app/models
+            - name: reports
+              mountPath: /app/reports
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: real-estate-models
+        - name: reports
+          persistentVolumeClaim:
+            claimName: real-estate-reports
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: real-estate-api
+spec:
+  selector:
+    app: real-estate-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: real-estate-bff
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: real-estate-bff
+  template:
+    metadata:
+      labels:
+        app: real-estate-bff
+    spec:
+      containers:
+        - name: bff
+          image: real-estate-bff:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8002
+          envFrom:
+            - configMapRef:
+                name: real-estate-config
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+              readOnly: true
+            - name: models
+              mountPath: /app/models
+            - name: reports
+              mountPath: /app/reports
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: real-estate-data
+        - name: models
+          persistentVolumeClaim:
+            claimName: real-estate-models
+        - name: reports
+          persistentVolumeClaim:
+            claimName: real-estate-reports
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: real-estate-bff
+spec:
+  selector:
+    app: real-estate-bff
+  ports:
+    - name: http
+      port: 8002
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: real-estate-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: real-estate-ui
+  template:
+    metadata:
+      labels:
+        app: real-estate-ui
+    spec:
+      containers:
+        - name: ui
+          image: real-estate-ui:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8501
+          envFrom:
+            - configMapRef:
+                name: real-estate-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: real-estate-ui
+spec:
+  selector:
+    app: real-estate-ui
+  ports:
+    - name: http
+      port: 8501
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: real-estate-drift
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: real-estate-drift
+  template:
+    metadata:
+      labels:
+        app: real-estate-drift
+    spec:
+      containers:
+        - name: drift
+          image: real-estate-api:local
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "src.monitoring.drift_service"]
+          ports:
+            - name: metrics
+              containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: real-estate-config
+          volumeMounts:
+            - name: models
+              mountPath: /app/models
+            - name: reports
+              mountPath: /app/reports
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: real-estate-models
+        - name: reports
+          persistentVolumeClaim:
+            claimName: real-estate-reports
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: real-estate-drift
+spec:
+  selector:
+    app: real-estate-drift
+  ports:
+    - name: metrics
+      port: 8001
+      targetPort: metrics

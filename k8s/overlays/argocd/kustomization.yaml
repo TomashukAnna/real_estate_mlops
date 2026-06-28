@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - ../monitoring
+images:
+  - name: real-estate-api
+    newName: ghcr.io/tomashukanna/real-estate-mlops-api
+    newTag: latest
+  - name: real-estate-bff
+    newName: ghcr.io/tomashukanna/real-estate-mlops-bff
+    newTag: latest
+  - name: real-estate-ui
+    newName: ghcr.io/tomashukanna/real-estate-mlops-ui
+    newTag: latest

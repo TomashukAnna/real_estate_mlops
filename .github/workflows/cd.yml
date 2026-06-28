@@ -7,18 +7,24 @@ on:
       - completed
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: real-estate-mlops-api
+  API_IMAGE_NAME: real-estate-mlops-api
+  BFF_IMAGE_NAME: real-estate-mlops-bff
+  UI_IMAGE_NAME: real-estate-mlops-ui
 
 jobs:
-  deploy:
+  publish-images:
+    name: Publish Docker Images
     if: >
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+      (
+        github.event.workflow_run.head_branch == 'main' ||
+        github.event.workflow_run.head_branch == 'master'
+      )
     runs-on: ubuntu-latest
 
     steps:
@@ -26,15 +32,18 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
 
       - name: Set lowercase owner
         id: owner
         run: echo "value=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
-      - name: Compute image reference
-        id: image
+      - name: Compute image references
+        id: images
         run: |
-          echo "repo=${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}" >> "$GITHUB_OUTPUT"
+          echo "api=${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.API_IMAGE_NAME }}" >> "$GITHUB_OUTPUT"
+          echo "bff=${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.BFF_IMAGE_NAME }}" >> "$GITHUB_OUTPUT"
+          echo "ui=${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.UI_IMAGE_NAME }}" >> "$GITHUB_OUTPUT"
           echo "tag=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
@@ -47,34 +56,58 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push image
+      - name: Build and push API image
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile
           push: true
           tags: |
-            ${{ steps.image.outputs.repo }}:${{ steps.image.outputs.tag }}
-            ${{ steps.image.outputs.repo }}:latest
+            ${{ steps.images.outputs.api }}:${{ steps.images.outputs.tag }}
+            ${{ steps.images.outputs.api }}:latest
 
-      - name: Deploy on server
-        uses: appleboy/ssh-action@v1.2.0
-        env:
-          IMAGE_REF: ${{ steps.image.outputs.repo }}:${{ steps.image.outputs.tag }}
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      - name: Build and push BFF image
+        uses: docker/build-push-action@v6
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: IMAGE_REF,GHCR_USERNAME,GHCR_TOKEN,DEPLOY_PATH
-          script: |
-            set -e
-            cd "$DEPLOY_PATH"
-            git fetch origin
-            git checkout main
-            git pull --ff-only origin main
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            API_IMAGE="$IMAGE_REF" docker compose pull api
-            API_IMAGE="$IMAGE_REF" docker compose up -d --remove-orphans api
-            docker image prune -f
+          context: .
+          file: Dockerfile.bff
+          push: true
+          tags: |
+            ${{ steps.images.outputs.bff }}:${{ steps.images.outputs.tag }}
+            ${{ steps.images.outputs.bff }}:latest
+
+      - name: Build and push UI image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ui
+          file: ./ui/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.images.outputs.ui }}:${{ steps.images.outputs.tag }}
+            ${{ steps.images.outputs.ui }}:latest
+
+      - name: Update Argo CD image tags
+        run: |
+          git fetch origin ${{ github.event.workflow_run.head_branch }}
+          git checkout ${{ github.event.workflow_run.head_branch }}
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("k8s/overlays/argocd/kustomization.yaml")
+          tag = "${{ steps.images.outputs.tag }}"
+          lines = path.read_text(encoding="utf-8").splitlines()
+          updated = []
+          for line in lines:
+              if line.strip().startswith("newTag:"):
+                  indent = line[: len(line) - len(line.lstrip())]
+                  updated.append(f"{indent}newTag: {tag}")
+              else:
+                  updated.append(line)
+          path.write_text("\n".join(updated) + "\n", encoding="utf-8")
+          PY
+          git add k8s/overlays/argocd/kustomization.yaml
+          git diff --cached --quiet && exit 0
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "chore: update argocd image tags [skip ci]"
+          git push origin HEAD:${{ github.event.workflow_run.head_branch }}

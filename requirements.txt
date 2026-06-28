@@ -14,3 +14,6 @@ uvicorn[standard]
 pydantic
 python-dotenv
 prometheus-client
+
+#yandex disk connection
+yadisk>=1.11.0

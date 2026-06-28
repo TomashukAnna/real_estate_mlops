@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: real-estate-grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: real-estate-grafana
+  template:
+    metadata:
+      labels:
+        app: real-estate-grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.1.4
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: admin
+          volumeMounts:
+            - name: provisioning
+              mountPath: /etc/grafana/provisioning/datasources/datasource.yml
+              subPath: datasource.yml
+              readOnly: true
+      volumes:
+        - name: provisioning
+          configMap:
+            name: grafana-provisioning
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: real-estate-grafana
+spec:
+  selector:
+    app: real-estate-grafana
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http

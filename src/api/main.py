@@ -5,11 +5,13 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram
 from prometheus_client import generate_latest
 
+from src.api.inference_logger import InferenceLogger
 from src.api.model_loader import ModelStore
 from src.api.schemas import PredictionRequest, PredictionResponse
 
 app = FastAPI(title="Real Estate Inference API", version="0.1.0")
 model_store = ModelStore()
+inference_logger = InferenceLogger()
 
 REQUEST_COUNT = Counter(
     "real_estate_api_requests_total",
@@ -25,6 +27,11 @@ PREDICTION_COUNT = Counter(
     "real_estate_api_predictions_total",
     "Total prediction requests handled by the API.",
     ["model_version", "status"],
+)
+LABELED_PREDICTION_COUNT = Counter(
+    "real_estate_api_labeled_predictions_total",
+    "Total prediction requests that include factual target values.",
+    ["model_version"],
 )
 MODEL_READY = Gauge(
     "real_estate_api_model_ready",
@@ -75,6 +82,25 @@ def health() -> Dict[str, Any]:
     }
 
 
+@app.post("/reload-model")
+def reload_model() -> Dict[str, Any]:
+    model_store.load()
+    MODEL_READY.set(1 if model_store.is_ready() else 0)
+    if not model_store.is_ready():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Model reload failed: "
+                f"{model_store.error or 'unknown error'}"
+            ),
+        )
+    return {
+        "status": "ok",
+        "model_ready": True,
+        "model_version": model_store.version(),
+    }
+
+
 @app.get("/metrics")
 def metrics() -> Response:
     MODEL_READY.set(1 if model_store.is_ready() else 0)
@@ -98,11 +124,34 @@ def predict(request: PredictionRequest) -> PredictionResponse:
                 f"{model_store.error or 'not loaded'}"
             ),
         )
-    prediction = model_store.predict(request.model_dump())
+    request_payload = request.model_dump()
+    prediction_payload = {
+        key: value
+        for key, value in request_payload.items()
+        if key not in ("actual_price_per_m2", "log_event")
+    }
+    prediction = model_store.predict(prediction_payload)
+    if request.log_event:
+        inference_logger.log_prediction(
+            payload={
+                **prediction_payload,
+                "actual_price_per_m2": (
+                    None
+                    if request.actual_price_per_m2 == -1
+                    else request.actual_price_per_m2
+                ),
+            },
+            prediction=prediction,
+            model_version=model_store.version(),
+        )
     PREDICTION_COUNT.labels(
         model_version=model_store.version(),
         status="success",
     ).inc()
+    if request.actual_price_per_m2 != -1:
+        LABELED_PREDICTION_COUNT.labels(
+            model_version=model_store.version(),
+        ).inc()
     return PredictionResponse.from_prediction(
         prediction,
         model_store.version(),

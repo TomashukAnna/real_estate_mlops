@@ -1,0 +1,109 @@
+# Docker Desktop Kubernetes mounts Windows drives under /run/desktop/mnt/host.
+# If the repository is moved, update these three paths before applying.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: real-estate-data-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadOnlyMany
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - desktop-worker
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: real-estate-local
+  hostPath:
+    path: /run/desktop/mnt/host/c/Users/SZGU_admin/Desktop/Допзадачи/АняЛиза/real_estate_mlops/data
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: real-estate-data
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: real-estate-local
+  volumeName: real-estate-data-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: real-estate-models-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - desktop-worker
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: real-estate-local
+  hostPath:
+    path: /run/desktop/mnt/host/c/Users/SZGU_admin/Desktop/Допзадачи/АняЛиза/real_estate_mlops/models
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: real-estate-models
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: real-estate-local
+  volumeName: real-estate-models-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: real-estate-reports-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - desktop-worker
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: real-estate-local
+  hostPath:
+    path: /run/desktop/mnt/host/c/Users/SZGU_admin/Desktop/Допзадачи/АняЛиза/real_estate_mlops/reports
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: real-estate-reports
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: real-estate-local
+  volumeName: real-estate-reports-pv

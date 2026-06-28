@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: real-estate-config
+data:
+  MODEL_PATH: models/model/model.pkl
+  MODEL_METADATA_PATH: models/model/metadata.json
+  INFERENCE_LOG_PATH: reports/inference/predictions.jsonl
+  DRIFT_REPORT_PATH: reports/drift/latest_drift_report.json
+  DRIFT_HTML_PATH: reports/drift/latest_drift_report.html
+  DRIFT_WINDOW_SIZE: "500"
+  DRIFT_INTERVAL_SECONDS: "60"
+  DRIFT_METRICS_PORT: "8001"
+  MLFLOW_TRACKING_URI: http://host.docker.internal:5000
+  BFF_INFERENCE_API_URL: http://real-estate-api:8000
+  BFF_DATASET_PATH: data/processed/cleaned_data.csv
+  BFF_PARAMS_PATH: params.yaml
+  BFF_REGISTRY_RESULT_PATH: reports/registry_result.json
+  STREAMLIT_BFF_URL: http://real-estate-bff:8002
+  STREAMLIT_REQUEST_TIMEOUT: "60"
+  STREAMLIT_DEFAULT_SAMPLE_SIZE: "10"
