@@ -200,7 +200,11 @@ class YandexStorage:
         """Получить список файлов в папке."""
         if not self._ensure_client():
             return []
-        full_remote = self._full_path(remote_path) if remote_path else self.base_path
+        full_remote = (
+            self._full_path(remote_path)
+            if remote_path
+            else self.base_path
+        )
         try:
             items = self.client.listdir(full_remote)
             return [item.name for item in items if item.type == "file"]

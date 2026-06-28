@@ -15,10 +15,6 @@ services:
       - YANDEX_METADATA_PATH=${YANDEX_METADATA_PATH:-metadata/metadata.json}
     ports:
       - "8000:8000"
-    # volumes: больше НЕ нужны — данные на Яндекс Диске
-    # volumes:
-    #   - ./models:/app/models
-    #   - ./reports:/app/reports
     restart: unless-stopped
 
   bff:
@@ -40,13 +36,6 @@ services:
       - YANDEX_DATASET_PATH=${YANDEX_DATASET_PATH:-data/processed/cleaned_data.csv}
     ports:
       - "8002:8002"
-    # volumes: данные теперь на Яндекс Диске
-    # volumes:
-    #   - ./data:/app/data
-    #   - ./models:/app/models
-    #   - ./reports:/app/reports
-    #   - ./params.yaml:/app/params.yaml:ro
-    # оставляем только params.yaml (код, не данные)
     volumes:
       - ./params.yaml:/app/params.yaml:ro
     extra_hosts:
@@ -86,15 +75,10 @@ services:
       - src.monitoring.drift_service
     ports:
       - "8001:8001"
-    # volumes: данные теперь на Яндекс Диске
-    # volumes:
-    #   - ./models:/app/models
-    #   - ./reports:/app/reports
     depends_on:
       - api
     restart: unless-stopped
 
-  # Остальные сервисы (prometheus, grafana, loki, promtail) не меняются
   prometheus:
     image: prom/prometheus:v2.54.1
     container_name: real-estate-prometheus

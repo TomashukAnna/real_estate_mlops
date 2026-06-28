@@ -13,7 +13,7 @@ data:
   DRIFT_METRICS_PORT: "8001"
   MLFLOW_TRACKING_URI: http://host.docker.internal:5000
   BFF_INFERENCE_API_URL: http://real-estate-api:8000
-  BFF_DATASET_PATH: data/processed/cleaned_data.csv
+  BFF_DATASET_PATH: /app/data/processed/cleaned_data.csv
   BFF_PARAMS_PATH: params.yaml
   BFF_REGISTRY_RESULT_PATH: reports/registry_result.json
   STREAMLIT_BFF_URL: http://real-estate-bff:8002

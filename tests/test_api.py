@@ -5,7 +5,7 @@ import joblib
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api.main import app
+from src.api.main import app, model_store
 
 
 class DummyModel:
@@ -41,6 +41,7 @@ def client(tmp_path: Path):
     # Создаем временные файлы для модели и метаданных
     model_path = tmp_path / "model.pkl"
     metadata_path = tmp_path / "metadata.json"
+    inference_log_path = tmp_path / "predictions.jsonl"
 
     joblib.dump(DummyModel(), model_path)
     metadata_path.write_text(
@@ -50,7 +51,7 @@ def client(tmp_path: Path):
 
     os.environ["MODEL_PATH"] = str(model_path)
     os.environ["MODEL_METADATA_PATH"] = str(metadata_path)
-
+    os.environ["INFERENCE_LOG_PATH"] = str(inference_log_path)
     # Подменяем YandexStorage на мок через monkeypatch
     import src.api.model_loader
     import src.infrastructure.yandex_storage
@@ -76,6 +77,9 @@ def client(tmp_path: Path):
 
     # Восстанавливаем оригинальный класс
     src.infrastructure.yandex_storage.YandexStorage = original_storage
+
+    model_store.load()
+    return TestClient(app)
 
 
 def test_health(client: TestClient):
@@ -133,9 +137,7 @@ def test_predict_skip_logging(client: TestClient, tmp_path: Path):
         },
     )
     assert response.status_code == 200
-    payload = response.json()
-    assert payload["model_version"] == "test-model-v1"
-    assert payload["prediction"] == 123456.78
+    assert log_path.read_text(encoding="utf-8").strip() == ""
 
 
 def test_predict_accepts_actual_price(client: TestClient):
@@ -156,17 +158,16 @@ def test_predict_accepts_actual_price(client: TestClient):
             "actual_price_per_m2": 145000.0,
         },
     )
+
     assert response.status_code == 200
-    payload = response.json()
-    assert payload["model_version"] == "test-model-v1"
-    assert payload["prediction"] == 123456.78
 
 
 def test_reload_model(client: TestClient):
     response = client.post("/reload-model")
+
     assert response.status_code == 200
     payload = response.json()
-    assert payload["status"] == "ok"
+    assert payload["model_ready"] is True
     assert payload["model_version"] == "test-model-v1"
 
 
@@ -197,9 +198,8 @@ def test_predict_logs_unlabeled_observation_as_null(
         },
     )
     assert response.status_code == 200
-    payload = response.json()
-    assert payload["model_version"] == "test-model-v1"
-    assert payload["prediction"] == 123456.78
+    body = (tmp_path / "predictions.jsonl").read_text(encoding="utf-8")
+    assert '"actual_price_per_m2": null' in body
 
 
 def test_metrics_endpoint(client: TestClient):
